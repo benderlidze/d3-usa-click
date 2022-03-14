@@ -3,7 +3,10 @@
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>D3: Zoom in to reveal counties</title>
+    <title>D3</title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
+    <script type="text/javascript" src="https://d3js.org/topojson.v3.min.js"></script>
+
     <style>
         .background {
             fill: none;
@@ -43,9 +46,9 @@
 
 <body>
     <div class="viz"></div>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
-    <script type="text/javascript" src="https://d3js.org/topojson.v3.min.js"></script>
     <script type="text/javascript">
+
+        const markers = []
         var margin = {
             top: 10,
             bottom: 10,
@@ -68,8 +71,6 @@
             .attr('width', width + margin.left + margin.right)
             .on('click', clicked);
 
-
-
         fetch('usa.topojson')
             .then(data => d3.json('usa.topojson'))
             .then(ready)
@@ -77,8 +78,8 @@
         d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQEMTmLV4k9lCD2y896NLuItwwGO36wUBoMppWebFxNKjlRXOsPE2cLgtLUc5qsiZC1MQvESvYa-1TL/pub?output=csv")
             .then(json => {
                 console.log('json', json);
+                markers.push(...json)
             })
-
 
         var projection = d3.geoAlbersUsa()
             .translate([width / 2, height / 2])
@@ -137,10 +138,45 @@
                 scale = .9 / Math.max(dx / width, dy / height),
                 translate = [width / 2 - scale * x, height / 2 - scale * y];
 
+            svg.selectAll('circle').remove()
+
             g.transition()
                 .duration(750)
                 .style("stroke-width", 1.5 / scale + "px")
-                .attr("transform", "translate(" + translate + ")scale(" + scale + ")");
+                .attr("transform", "translate(" + translate + ")scale(" + scale + ")")
+                .on("end", () => {
+
+                    g.selectAll(".mark")
+                        .data(markers)
+                        .enter()
+                        .append("image")
+                        .attr('class', 'mark')
+                        .attr('width', 40)
+                        .attr('height', 40)
+                        .attr("xlink:href", 'icon.png')
+                        .attr("transform", function (d) {
+                            console.log(`translate(" + ${projection([d.lng, d.lat])} + ")scale(" + 1 / ${scale} + ")`);
+                            console.log('scale', scale);
+
+                            if (scale > 3) scale = 1;
+
+                            return "translate(" + projection([d.lng, d.lat]) + ")scale(" + 1 / scale + ")";
+                        })
+                        .on("mouseover", function (b) {
+                            d3.select(this).style("fill", "red").append('text')
+                                .text("hi");
+                        })
+                        .on("mouseout", function () {
+                            d3.select(this).style("fill", "blue");
+                        })
+                        .on("click", function () {
+                            console.log('click',);
+                        });
+
+                });
+
+
+
         }
 
 
@@ -154,6 +190,7 @@
                 .style("stroke-width", "1.5px")
                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
+            svg.selectAll('circle').remove()
         }
     </script>
 </body>
