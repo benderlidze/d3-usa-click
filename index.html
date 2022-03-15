@@ -60,6 +60,11 @@
             width: 100%;
             height: 100%;
         }
+
+        .info-item {
+            margin: 5px;
+            
+        }
     </style>
 </head>
 
@@ -182,12 +187,17 @@
                 .attr("d", path)
                 .attr("class", d => {
 
-                    const number = markers.filter(m => {
+                    let active = false;
+                    markers.forEach(m => {
                         var pt = turf.point([m.lng, m.lat]);
                         var poly = d
-                        return turf.booleanPointInPolygon(pt, poly);
+                        if (turf.booleanPointInPolygon(pt, poly)) {
+                            active = true
+                            m.polyId = d.id
+                        }
                     })
-                    if (number.length > 0) {
+
+                    if (active) {
                         return "state active markers";
                     } else {
                         return "state"
@@ -205,10 +215,12 @@
         }
 
         function clicked(d) {
-            if (d3.select('.background').node() === this) return reset();
 
+            if (d3.select('.background').node() === this) return reset();
             if (active.node() === this) return reset();
 
+            const markersInside = []
+            const polyId = d.id
             active.classed("active", false);
             active = d3.select(this).classed("active", true);
 
@@ -226,6 +238,20 @@
                 .attr("transform", "translate(" + translate + ")scale(" + scale + ")")
                 .on("end", () => { });
 
+            g.selectAll(".mark")
+                .style("display", marker => {
+                    if (polyId === marker.polyId) {
+                        markersInside.push(marker)
+                        return ""
+                    }
+                    return "none"
+                })
+
+            infoDiv.innerHTML = markersInside.map(m => {
+                return `
+                    <div class="info-item">${m.address}</div>
+                `
+            }).join("")
         }
 
 
@@ -242,13 +268,15 @@
                 .style("stroke-width", "1.5px")
                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
+            g.selectAll(".mark")
+                .style("display", "none")
 
             // g.selectAll(".mark")
             //     .transition()
             //     .duration(750)
             //     .attr('transform', 'translate(' + margin.left - 20 + ',' + margin.top - 20 + ')');
 
-
+            infoDiv.innerHTML = '';
         }
     </script>
 </body>
