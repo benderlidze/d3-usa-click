@@ -49,6 +49,8 @@
         .left {
             min-width: 300px;
             border-right: 1px solid rgb(131, 131, 131);
+            overflow-y: auto;
+            max-height: 400px;
 
         }
 
@@ -63,7 +65,19 @@
 
         .info-item {
             margin: 5px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: rgb(238, 238, 238);
+            overflow: hidden;
+            border-radius: 10px;;
+        }
 
+        .img {
+            max-width: 100%;
+        }
+
+        .price {
+            font-weight: bold;
         }
     </style>
 </head>
@@ -250,7 +264,13 @@
 
             infoDiv.innerHTML = markersInside.map(m => {
                 return `
-                    <div class="info-item">${m.address}</div>
+                    <div class="info-item">
+                        <div class="addr">${m.address}</div>
+                        <div class="image"><img src="${m.img}" class="img"></div>
+                        <div class="info">${m.info}</div>
+                        <div class="price">${m.price}</div>
+                        <div class="link">${m.link}</div>
+                    </div>
                 `
             }).join("")
         }
@@ -259,7 +279,16 @@
         function reset() {
 
 
-            if (!active.classed("markers")) active.classed("active", false);//do not remove hightlight if there are markers
+            console.log('active', active);
+
+            //active.classed("markers")
+            //if (!active.classed("markers")) active.classed("active", false);//do not remove hightlight if there are markers
+
+            try {
+                if (!active.classed("markers")) active.classed("active", false);
+            } catch (error) {
+
+            }
 
             active = d3.select(null);
 
@@ -272,10 +301,7 @@
             g.selectAll(".mark")
                 .style("display", "none")
 
-            // g.selectAll(".mark")
-            //     .transition()
-            //     .duration(750)
-            //     .attr('transform', 'translate(' + margin.left - 20 + ',' + margin.top - 20 + ')');
+
 
             infoDiv.innerHTML = '';
         }
