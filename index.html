@@ -6,6 +6,7 @@
     <title>D3</title>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
     <script type="text/javascript" src="https://d3js.org/topojson.v3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
     <style>
         .background {
@@ -31,29 +32,60 @@
             pointer-events: none;
         }
 
-        .county-boundary {
-            fill: #aaa;
-            stroke: #fff;
-            stroke-width: .5px;
-        }
 
-        .county-boundary:hover,
         .state:hover {
             fill: #0057ce;
+        }
+
+        .state .active {
+            fill: #0057ce;
+        }
+
+        #container {
+            display: flex;
+            min-height: 400px;
+        }
+
+        .left {
+            min-width: 300px;
+            border-right: 1px solid rgb(131, 131, 131);
+
+        }
+
+        .right {
+            width: 100%;
+        }
+
+        .viz {
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
 
 <body>
-    <div class="viz"></div>
-    <script type="text/javascript">
 
+    <div id="container">
+        <div class="left" id="info">Info</div>
+        <div class="right">
+            <div class="viz"></div>
+        </div>
+    </div>
+
+
+
+    <script type="text/javascript">
+        const infoDiv = document.getElementById("info");
         const markers = []
+        const image = {
+            width: 40,
+            heigth: 40
+        }
         var margin = {
-            top: 10,
-            bottom: 10,
-            left: 10,
-            right: 10
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0
         }, width = parseInt(d3.select('.viz').style('width'))
             , width = width - margin.left - margin.right
             , mapRatio = 0.5
@@ -72,65 +104,60 @@
             .on('click', clicked);
 
         d3.json('us.topojson')
-            .then(ready)
+            .then((data) => {
 
-        d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQEMTmLV4k9lCD2y896NLuItwwGO36wUBoMppWebFxNKjlRXOsPE2cLgtLUc5qsiZC1MQvESvYa-1TL/pub?output=csv")
-            .then(json => {
-                console.log('json', json);
-                markers.push(...json)
+                d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQEMTmLV4k9lCD2y896NLuItwwGO36wUBoMppWebFxNKjlRXOsPE2cLgtLUc5qsiZC1MQvESvYa-1TL/pub?output=csv")
+                    .then(json => {
+                        console.log('json', json);
+                        markers.push(...json)
 
+                        ready(data, markers)
 
-                const image = {
-                    width: 40,
-                    heigth: 40
-                }
-                g.selectAll(".mark")
-                    .data(markers)
-                    .enter()
-                    .append("image")
-                    .style('margin-left', '-20px')
-                    .style('margin-top', '-20px')
-                    .attr('class', 'mark')
-                    .attr('width', image.width)
-                    .attr('height', image.heigth)
-                    .attr("xlink:href", 'icon.png')
-                    .attr("x", function (d) {
-                        return projection([d.lng, d.lat])[0] - image.width / 2;
-                    })
-                    .attr("y", function (d) {
-                        return projection([d.lng, d.lat])[1] - image.heigth;
-                    })
-                    .on("mouseover", function (b) {
-                        d3.select(this).style("fill", "red").append('text')
-                            .text("hi");
-                    })
-                    .on("mouseout", function () {
-                        d3.select(this).style("fill", "blue");
-                    })
-                    .on("click", function () {
-                        console.log('click',);
-                    });
+                        g.selectAll(".mark")
+                            .data(markers)
+                            .enter()
+                            .append("image")
+                            .style('margin-left', '-20px')
+                            .style('margin-top', '-20px')
+                            .style('display', 'none')
+                            .attr('class', 'mark')
+                            .attr('width', image.width)
+                            .attr('height', image.heigth)
+                            .attr("xlink:href", 'icon.png')
+                            .attr("x", function (d) {
+                                return projection([d.lng, d.lat])[0] - image.width / 2;
+                            })
+                            .attr("y", function (d) {
+                                return projection([d.lng, d.lat])[1] - image.heigth;
+                            })
+                            .on("mouseover", function (b) {
 
+                            })
+                            .on("mouseout", function () {
 
-                g.selectAll("circle")
-                    .data(markers)
-                    .enter()
-                    .append("circle")
-                    .attr("cx", function (d) {
-                        return projection([d.lng, d.lat])[0];
-                    })
-                    .attr("cy", function (d) {
-                        return projection([d.lng, d.lat])[1];
-                    })
-                    .attr("r", function (d) {
-                        return 2
-                    })
-                    .style("fill", "rgb(217,91,67)")
-                    .style("opacity", 0.85)
+                            })
+                            .on("click", function (d) {
+                                console.log('click', d);
+                                infoDiv.innerHTML = d.address;
+                            })
+
+                        g.selectAll("circle")
+                            .data(markers)
+                            .enter()
+                            .append("circle")
+                            .attr("cx", function (d) {
+                                return projection([d.lng, d.lat])[0];
+                            })
+                            .attr("cy", function (d) {
+                                return projection([d.lng, d.lat])[1];
+                            })
+                            .attr("r", 2)
+                            .style("fill", "rgb(255,255,255)")
+                            .style("opacity", 0.85)
 
 
+                    })
             })
-
         var projection = d3.geoAlbersUsa()
             .translate([width / 2, height / 2])
             .scale(width);
@@ -144,17 +171,31 @@
             .attr('width', width + margin.left + margin.right)
             .attr('height', height + margin.top + margin.bottom)
 
-        function ready(us) {
+        function ready(us, markers) {
 
             g.append("g")
                 .attr("id", "states")
                 .selectAll("path")
                 .data(topojson.feature(us, us.objects.states).features)
-                .enter().append("path")
+                .enter()
+                .append("path")
                 .attr("d", path)
-                .attr("class", "state")
-                .on("click", clicked);
+                .attr("class", d => {
 
+                    const number = markers.filter(m => {
+                        var pt = turf.point([m.lng, m.lat]);
+                        var poly = d
+                        return turf.booleanPointInPolygon(pt, poly);
+                    })
+                    if (number.length > 0) {
+                        return "state active markers";
+                    } else {
+                        return "state"
+                    }
+
+                })
+
+                .on("click", clicked);
 
             g.append("path")
                 .datum(topojson.mesh(us, us.objects.states, function (a, b) { return a !== b; }))
@@ -183,19 +224,16 @@
                 .duration(750)
                 .style("stroke-width", 1.5 / scale + "px")
                 .attr("transform", "translate(" + translate + ")scale(" + scale + ")")
-                .on("end", () => {
-
-
-
-                });
-
-
+                .on("end", () => { });
 
         }
 
 
         function reset() {
-            active.classed("active", false);
+
+
+            if (!active.classed("markers")) active.classed("active", false);//do not remove hightlight if there are markers
+
             active = d3.select(null);
 
             g.transition()
@@ -203,6 +241,13 @@
                 .duration(750)
                 .style("stroke-width", "1.5px")
                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+
+            // g.selectAll(".mark")
+            //     .transition()
+            //     .duration(750)
+            //     .attr('transform', 'translate(' + margin.left - 20 + ',' + margin.top - 20 + ')');
+
 
         }
     </script>
